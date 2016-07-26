@@ -11,6 +11,19 @@ recv_path = '/lsst8/felipe/ARCHIVE_RECEIVED/DECam/instcal'
 REPO = '/lsst8/felipe/REPOS/DECam'
 PRODUCTS = '/lsst8/felipe/PRODUCTS'
 
+TEMPLATE_ID = {
+    '0197371' : '0197371',
+    '0197367' : '0197371',
+    '0197375' : '0197371',
+    '0197379' : '0197371',
+
+    '0197384' : '0197384',
+    '0197388' : '0197384',
+    '0197392' : '0197384',
+
+# Taken from: http://dmtn-006.lsst.io/en/latest/#appendix-a-data-used-in-this-work
+}
+
 def elapsed_time(t1,verbose=False):
     """ Formating of the elapsed time """
     import time
@@ -52,21 +65,21 @@ if __name__ == "__main__":
 
     t0 = time.time()
     # Step 1 -- processCCd
-    #repo_path = REPO
-    repo_path = '/lsst7/ctslater/decam_instcal_repo' # we need to use this one, REPO is not working
+    repo_path = REPO
+    #repo_path = '/lsst7/ctslater/decam_instcal_repo' # we need to use this one, REPO is not working
     instcal_config = '/home/felipe/LSSTDEV/L1Devel/diffImTest/config/instcal.config'
     command = "processCcd.py {REPO} --id visit={EXPNUM} ccdnum={CCDNUM} --output {PRODUCTS}  -C {instcal_config}"
     cmd = command.format(REPO=repo_path,EXPNUM=EXPNUM,CCDNUM=CCDNUM,PRODUCTS=PRODUCTS,instcal_config=instcal_config)
     print "Running:\n%s\n" % cmd 
-    #os.system(cmd)
+    os.system(cmd)
     print "Done processCcd.py\n"
 
     # Step 2 -- diffIm
     diffIm_config = '/home/felipe/LSSTDEV/L1Devel/diffImTest/config/diffIm.config'
     command = "imageDifference.py {PRODUCTS} --id visit={EXPNUM}  ccdnum={CCDNUM} --templateId visit={EXPNUM_TEMPLATE} --rerun A --config doAddCalexpBackground=False -C {diffIm_config}"
-    cmd = command.format(EXPNUM=EXPNUM,CCDNUM=CCDNUM,PRODUCTS=PRODUCTS,diffIm_config=diffIm_config,EXPNUM_TEMPLATE='0197371')
+    cmd = command.format(EXPNUM=EXPNUM,CCDNUM=CCDNUM,PRODUCTS=PRODUCTS,diffIm_config=diffIm_config,EXPNUM_TEMPLATE=TEMPLATE_ID[EXPNUM])
     print "Running:\n%s\n" % cmd
-    #os.system(cmd)
+    os.system(cmd)
     print "Done imageDifference.py\n"
 
     print "Total process time: %s" % elapsed_time(t0)
