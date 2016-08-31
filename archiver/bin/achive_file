@@ -1,0 +1,25 @@
+#!/usr/bin/env python
+
+
+""" A simple mock driver to ingest an LSST Camera file """
+
+
+from archiver import archiver_tools
+import os
+import sys
+
+# Get the filename
+filename = sys.argv[1:]
+
+# Create and archiver worker
+aw = archiver_tools.ArchiveWorker()
+
+# Check metadata is present in filename
+aw.checkMetadata(filename)
+
+# Check md5
+aw.checkMD5(filename)
+
+# Insert into DB
+aw.updateDB(filename)
+

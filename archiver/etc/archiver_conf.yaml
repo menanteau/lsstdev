@@ -1,0 +1,11 @@
+archive-db:
+    host: localhost
+    user: root
+    passwd: my secret password
+    db: write-math
+
+keywords: 
+   - ID
+   - RA
+   - DEC
+   - DATE
