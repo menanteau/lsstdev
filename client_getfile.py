@@ -16,15 +16,26 @@ def prepare_socket(remote_host,port=50000):
     s.send("Hello server from: %s" % localhost)
     return s
 
-def retrieve_filename(socket_object):
+def retrieve_filename(socket_object,prefix=None,path=None):
 
+    # Todo: 
+    # we might want to add a path/archive where we want to put the file
+
+    # Short cut
     s = socket_object
     
     # Get the name of the filename from the server
     filename = s.recv(BFSIZE)
 
     # Define the local name
-    recv_filename = "rec_%s" % filename
+    if prefix:
+        recv_filename = "%s_%s" % (sufix,filename)
+    else:
+        recv_filename = filename
+
+    if path:
+        recv_filename = os.path.join(path,recv_filename)
+
     print "Will write to file: %s" % recv_filename
 
     with open(recv_filename, 'wb') as f:
@@ -43,7 +54,7 @@ def retrieve_filename(socket_object):
         print "Successfully got the file: %s" % filename
         print 'connection closed... bye'
 
-    return
+    return recv_filename
 
 if __name__ == "__main__":
 
