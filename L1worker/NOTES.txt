@@ -1,5 +1,9 @@
+# Load the LSST stack
 source $HOME/lsst_stack/loadLSST.bash
+
+# Use this tag which is compatible with DECam
 setup lsst_apps -t w_2016_20
 setup -j -r $HOME/LSSTDEV/w_2016_20/obs_decam
 
+# Run it using the setup in file: config_example.ini
 ./worker_mock.py config_example.ini 

@@ -11,12 +11,13 @@ import worker_utils as wutils
 import configparser
 import argparse
 
-
+#########################################################
 # For LSST stacks, we fix the OSX EL Capitan and above
 # DYLD_LIBRARY_PATH problem, but re-assigning it to LSST_LIBRARY_PATH
 #import platform
 #if platform.system() == 'Darwin' and int(platform.mac_ver()[0].split(".")[1]) >=1:
 #    os.environ['DYLD_LIBRARY_PATH'] = os.environ['LSST_LIBRARY_PATH']
+#########################################################
 
 """
 This is a very simple set of instruction to mock the elements of
