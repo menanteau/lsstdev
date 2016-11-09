@@ -1,0 +1,50 @@
+#!/usr/bin/env python
+
+from mocker import filemaker
+from mocker import mock_tools as mtools
+
+
+def cmdline():
+
+    import argparse
+
+    # Make conf_parser that hold values from a config.ini file
+    conf_parser,defaults = mtools.build_conf_parser(verb=False)
+    parser = argparse.ArgumentParser(description="Creates set of mock files to benchmark specs for L1 Prompt Processing",
+                                     parents=[conf_parser])
+
+    # The command-line arguments
+    parser.add_argument("--naxis1", action="store",default=4096, type=int,
+                        help="NAXIS1 Dimension")
+    parser.add_argument("--naxis2", action="store",default=4096, type=int,
+                        help="NAXIS2 Dimension")
+    parser.add_argument("--band", action="store",default="r",
+                        help="Band name for flats")
+    parser.add_argument("--date", action="store",default='19691231',
+                        help="Date String for raws")
+    parser.add_argument("--ccds", action="store",default='all',
+                        help="List of CCDs to build")
+    parser.add_argument("--nccds", action="store",default=189, type=int,
+                        help="Number of CCDs to build")
+    parser.add_argument("--expnum", action="store",default=None, type=int,
+                        help="Exposure number to build for raws")
+
+    parser.set_defaults(**defaults)
+    args = parser.parse_args()
+
+    # Sanity checks
+    # If ccds is not a list:
+    if args.ccds == 'all':
+        args.ccds = [k+1 for k in range(args.nccds)]
+    
+    return args
+
+if __name__ == "__main__":
+
+    args = cmdline()
+    kw = vars(args)
+    maker = filemaker.IMAGEMAKER(**kw)
+    maker.make('raw','int16',band='r',extnames=['SCI'])
+    maker.make('bpm','int16',extnames=['BPM'])
+    maker.make('flat','float32',band='r',extnames=['SCI','WGT'])
+    maker.make('bias','float32',extnames=['SCI','WGT'])

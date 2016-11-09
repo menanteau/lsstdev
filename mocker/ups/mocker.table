@@ -1,0 +1,3 @@
+setupRequired(fitsio 0.9.8rc1+5)
+envAppend(PYTHONPATH, ${PRODUCT_DIR}/python)
+envAppend(PATH, ${PRODUCT_DIR}/bin)

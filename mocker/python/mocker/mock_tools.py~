@@ -1,0 +1,11 @@
+import os
+
+def create_output_path(local_archive,logger=None):
+   
+    """ Make sure that the place where we want to write exists"""
+    if not os.path.exists(local_archive):
+        message = "Will create: %s" % local_archive
+        if logger: logger.info(message)
+        else: print message
+        os.makedirs(local_archive)
+    return
