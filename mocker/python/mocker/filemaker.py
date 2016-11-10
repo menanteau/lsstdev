@@ -10,12 +10,14 @@ RAW_OUTFILE  = "{archive_path}/raw/{date}/raw_{expnum:09d}_c{ccdnum:03d}_{band}.
 BPM_OUTFILE  = "{archive_path}/cals/bpm/bpm_c{ccdnum:03d}.fits"
 FLAT_OUTFILE = "{archive_path}/cals/flats/flats_c{ccdnum:03d}_{band}.fits"
 BIAS_OUTFILE = "{archive_path}/cals/bias/bias_c{ccdnum:03d}.fits"
+TEMPLATE_OUTFILE = "{archive_path}/cals/templates/tmpl_c{ccdnum:03d}_{band}.fits"
 
 OUTFILE = {
 'raw'  : RAW_OUTFILE,
 'bpm'  : BPM_OUTFILE,
 'flat' : FLAT_OUTFILE,
 'bias' : BIAS_OUTFILE,
+'template' : TEMPLATE_OUTFILE,
 }
 
 class IMAGEMAKER(object):
@@ -46,10 +48,12 @@ class IMAGEMAKER(object):
         # Get the generic headers for CCD/TEL
         self.header =  self.read_generic_headers()
 
-    def make(self,filetype,btype,extnames=['SCI',],**keys):
+    def make(self,filetype,btype,extnames=['SCI',],band='',**keys):
 
         """ Generic Make image of filetype, btype"""
 
+
+        self.band = band
         # If any additional keys.... unpack
         for k, v in keys.iteritems():
             setattr(self, k, v)
@@ -62,7 +66,7 @@ class IMAGEMAKER(object):
         for ccdnum in self.ccds:
 
             # Make sure that they are integers
-            #ccdnum = int(ccdnum)
+            ccdnum = int(ccdnum)
             # The output name
             kw = {'band':self.band,'expnum':self.expnum,'ccdnum':ccdnum, 'archive_path':self.archive_path, 'date':self.date}
             outfile = OUTFILE[filetype].format(**kw)
@@ -71,7 +75,12 @@ class IMAGEMAKER(object):
             # Loop over extnames
             for extname in extnames:
                 # Make a random np array
-                im_ccd[extname] = numpy.random.random((self.naxis1,self.naxis2)).astype(btype)
+                if filetype == 'template':
+                    n1 = int(self.naxis1*1.25)
+                    n2 = int(self.naxis2*1.25)
+                    im_ccd[extname] = numpy.random.random((n1,n2)).astype(btype)
+                else:
+                    im_ccd[extname] = numpy.random.random((self.naxis1,self.naxis2)).astype(btype)
             ofits = fitsio.FITS(outfile,'rw',clobber=True)
             ofits.write(im_ccd[extname],extname=extname,header=self.header['CCD'])
             print "Wrote %s" % outfile

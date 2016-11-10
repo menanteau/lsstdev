@@ -18,8 +18,8 @@ def cmdline():
                         help="NAXIS1 Dimension")
     parser.add_argument("--naxis2", action="store",default=4096, type=int,
                         help="NAXIS2 Dimension")
-    parser.add_argument("--band", action="store",default="r",
-                        help="Band name for flats")
+    parser.add_argument("--bands", action="store",default=['r'], nargs='+',
+                        help="List of bands to create")
     parser.add_argument("--date", action="store",default='19691231',
                         help="Date String for raws")
     parser.add_argument("--ccds", action="store",default='all',
@@ -32,10 +32,12 @@ def cmdline():
     parser.set_defaults(**defaults)
     args = parser.parse_args()
 
-    # Sanity checks
+    # Sanity checks for ccds to be integers
     # If ccds is not a list:
     if args.ccds == 'all':
         args.ccds = [k+1 for k in range(args.nccds)]
+    else:
+        args.ccds = [int(ccd) for ccd in args.ccds]
     
     return args
 
@@ -43,8 +45,12 @@ if __name__ == "__main__":
 
     args = cmdline()
     kw = vars(args)
+
     maker = filemaker.IMAGEMAKER(**kw)
-    maker.make('raw','int16',band='r',extnames=['SCI'])
     maker.make('bpm','int16',extnames=['BPM'])
-    maker.make('flat','float32',band='r',extnames=['SCI','WGT'])
     maker.make('bias','float32',extnames=['SCI','WGT'])
+    for band in args.bands:
+        maker.make('flat','float32',band=band,extnames=['SCI','WGT'])
+        maker.make('raw','int16',band=band,extnames=['SCI'])
+        maker.make('template','float32',band=band, extnames=['SCI','WGT'])
+
