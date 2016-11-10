@@ -73,6 +73,7 @@ class IMAGEMAKER(object):
             im_ccd = OrderedDict()
 
             # Loop over extnames
+            ofits = fitsio.FITS(outfile,'rw',clobber=True)
             for extname in extnames:
                 # Make a random np array
                 if filetype == 'template':
@@ -81,8 +82,8 @@ class IMAGEMAKER(object):
                     im_ccd[extname] = numpy.random.random((n1,n2)).astype(btype)
                 else:
                     im_ccd[extname] = numpy.random.random((self.naxis1,self.naxis2)).astype(btype)
-            ofits = fitsio.FITS(outfile,'rw',clobber=True)
-            ofits.write(im_ccd[extname],extname=extname,header=self.header['CCD'])
+                ofits.write(im_ccd[extname],extname=extname,header=self.header['CCD'])
+
             print "Wrote %s" % outfile
         
     @staticmethod
