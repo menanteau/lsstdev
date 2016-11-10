@@ -47,10 +47,10 @@ if __name__ == "__main__":
     kw = vars(args)
 
     maker = filemaker.IMAGEMAKER(**kw)
-    maker.make('bpm','int16',extnames=['BPM'])
+    maker.make('bpm','int32',extnames=['BPM'])
     maker.make('bias','float32',extnames=['SCI','WGT'])
     for band in args.bands:
         maker.make('flat','float32',band=band,extnames=['SCI','WGT'])
-        maker.make('raw','int16',band=band,extnames=['SCI'])
+        maker.make('raw','int32',band=band,extnames=['SCI'])
         maker.make('template','float32',band=band, extnames=['SCI','WGT'])
 
