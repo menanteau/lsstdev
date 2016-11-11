@@ -20,7 +20,7 @@ def cmdline():
                         help="NAXIS2 Dimension")
     parser.add_argument("--bands", action="store",default=['r'], nargs='+',
                         help="List of bands to create")
-    parser.add_argument("--date", action="store",default='19691231',
+    parser.add_argument("--nite", action="store",default='19691231', 
                         help="Date String for raws")
     parser.add_argument("--ccds", action="store",default='all',
                         help="List of CCDs to build")

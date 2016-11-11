@@ -5,26 +5,14 @@ import numpy
 from collections import OrderedDict
 import mock_tools
 
-# This can be modified by the configuration file.
-RAW_OUTFILE  = "{archive_path}/raw/{date}/raw_{expnum:09d}_c{ccdnum:03d}_{band}.fits"
-BPM_OUTFILE  = "{archive_path}/cals/bpm/bpm_c{ccdnum:03d}.fits"
-FLAT_OUTFILE = "{archive_path}/cals/flats/flats_c{ccdnum:03d}_{band}.fits"
-BIAS_OUTFILE = "{archive_path}/cals/bias/bias_c{ccdnum:03d}.fits"
-TEMPLATE_OUTFILE = "{archive_path}/cals/templates/tmpl_c{ccdnum:03d}_{band}.fits"
-
-OUTFILE = {
-'raw'  : RAW_OUTFILE,
-'bpm'  : BPM_OUTFILE,
-'flat' : FLAT_OUTFILE,
-'bias' : BIAS_OUTFILE,
-'template' : TEMPLATE_OUTFILE,
-}
 
 class IMAGEMAKER(object):
 
     """
     A Class to create mock file to test LSST L1/Prompt processing
     pipeline footprints
+
+    Felipe Menanteau, Nov 2016
     """
 
     def __init__(self, **keys):
@@ -32,7 +20,10 @@ class IMAGEMAKER(object):
         self.keys = keys
 
         # Load defaults OUTFILE patterns
-        self.OUTFILE = OUTFILE
+        self.OUTFILE = mock_tools.OUTFILE
+
+        # Load default location
+        self.MOCKER_DIR = mock_tools.MOCKER_DIR
         
         # Unpack the dictionary of **keys into variables
         # self.keyname = key['keyname']
@@ -42,16 +33,15 @@ class IMAGEMAKER(object):
         # Update OUTFILE format
         for key in self.OUTFILE.keys():
             if keys.get('%s_OUTFILE' % key.upper()):
-                print "Updating %s" % key
+                print "Updating %s definitions" % key
                 self.OUTFILE[key] = keys.get('%s_OUTFILE' % key.upper())
 
         # Get the generic headers for CCD/TEL
-        self.header =  self.read_generic_headers()
+        self.header =  self.read_generic_headers(self.MOCKER_DIR)
 
     def make(self,filetype,btype,extnames=['SCI',],band='',**keys):
 
         """ Generic Make image of filetype, btype"""
-
 
         self.band = band
         # If any additional keys.... unpack
@@ -68,8 +58,8 @@ class IMAGEMAKER(object):
             # Make sure that they are integers
             ccdnum = int(ccdnum)
             # The output name
-            kw = {'band':self.band,'expnum':self.expnum,'ccdnum':ccdnum, 'archive_path':self.archive_path, 'date':self.date}
-            outfile = OUTFILE[filetype].format(**kw)
+            kw = {'band':self.band,'expnum':self.expnum,'ccdnum':ccdnum, 'archive_path':self.archive_path, 'nite':self.nite}
+            outfile = self.OUTFILE[filetype].format(**kw)
             im_ccd = OrderedDict()
 
             # Loop over extnames
@@ -87,12 +77,12 @@ class IMAGEMAKER(object):
             print "Wrote %s" % outfile
         
     @staticmethod
-    def read_generic_headers():
+    def read_generic_headers(mocker_dir):
         """ Read in the generic header per CCD  and telescope """
         # TODO: Add a PRODUCT_DIR path
         header = OrderedDict()
-        ccd_head_file = os.path.join(os.environ['MOCKER_DIR'],'etc','ccd.header')
-        tel_head_file = os.path.join(os.environ['MOCKER_DIR'],'etc','telescope.header')
+        ccd_head_file = os.path.join(mocker_dir,'etc','ccd.header')
+        tel_head_file = os.path.join(mocker_dir,'etc','telescope.header')
         header['CCD'] = fitsio.read_scamp_head(ccd_head_file)
         header['TEL'] = fitsio.read_scamp_head(tel_head_file)
         return header

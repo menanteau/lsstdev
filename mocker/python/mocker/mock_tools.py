@@ -1,6 +1,37 @@
 import os
 import argparse
 import ConfigParser
+import time
+
+# This can be modified by the configuration file -- move to mock_tools
+RAW_OUTFILE  = "{archive_path}/raw/{nite}/raw_{expnum:09d}_c{ccdnum:03d}_{band}.fits"
+BPM_OUTFILE  = "{archive_path}/cals/bpm/bpm_c{ccdnum:03d}.fits"
+FLAT_OUTFILE = "{archive_path}/cals/flats/flats_c{ccdnum:03d}_{band}.fits"
+BIAS_OUTFILE = "{archive_path}/cals/bias/bias_c{ccdnum:03d}.fits"
+TEMPLATE_OUTFILE = "{archive_path}/cals/templates/tmpl_c{ccdnum:03d}_{band}.fits"
+
+OUTFILE = {
+'raw'  : RAW_OUTFILE,
+'bpm'  : BPM_OUTFILE,
+'flat' : FLAT_OUTFILE,
+'bias' : BIAS_OUTFILE,
+'template' : TEMPLATE_OUTFILE,
+}
+
+# Get the location where the code is installed
+try:
+    MOCKER_DIR = os.path.join(os.environ['MOCKER_DIR'])
+except:
+    MOCKER_DIR = __file__.split("/python/")[0]
+
+def elapsed_time(t1,verbose=False):
+    """ Formating of the elapsed time """
+    t2    = time.time()
+    stime = "%dm %2.2fs" % ( int( (t2-t1)/60.), (t2-t1) - 60*int((t2-t1)/60.))
+    if verbose:
+        print "# Elapsed time: %s" % stime
+    return stime
+
 
 def create_output_path(local_archive,logger=None):
    
