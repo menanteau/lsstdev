@@ -1,0 +1,80 @@
+#!/usr/bin/env python
+
+from mocker import filemaker
+from mocker import mock_tools as mtools
+from mocker import steps_ap
+from datetime import datetime
+import time
+
+def cmdline():
+
+    DATE = (datetime.now()).isoformat()
+
+    import argparse
+
+    # Make conf_parser that hold values from a config.ini file
+    conf_parser,defaults = mtools.build_conf_parser(verb=False)
+    parser = argparse.ArgumentParser(description="Creates set of mock files to benchmark specs for L1 Prompt Processing",
+                                     parents=[conf_parser])
+    # The command-line arguments
+    parser.add_argument("--ra", action="store",default=None, type=float, 
+                        help="The RA of the visit")
+    parser.add_argument("--dec", action="store",default=None, type=float,
+                        help="The DEC of the visit")
+    parser.add_argument("--ccdnum", action="store",default=None, type=int,
+                        help="The CCD assigned")
+    parser.add_argument("--band", action="store",default=None, 
+                        help="Number of CCDs to build")
+    parser.add_argument("--expnum", action="store",default=None, type=int, 
+                        help="Exposure number to process")
+    parser.add_argument("--obsdate", action="store",default=DATE,
+                        help="Exposure number to process")
+    parser.add_argument("--nite", action="store",default='19691231', 
+                        help="Date String for raws")
+    parser.add_argument("--job_path", action="store",default='job_path', 
+                        help="The path where the outputs of the job will be located")
+    parser.add_argument("--exposure", action="store",default=16, type=int, 
+                        help="Exposure time per snap (include readout)")
+    parser.add_argument("--slew", action="store",default=2, type=int, 
+                        help="Slew time")
+    parser.add_argument("--isr", action="store",default=15, type=int, 
+                        help="ISR (detremd) time")
+    parser.add_argument("--readout", action="store",default=0, type=int, 
+                        help="Readout Time")
+    parser.add_argument("--dryrun", action="store_true",default=False, 
+                        help="Dryrun: Simulate everything, including I/O")
+
+    parser.set_defaults(**defaults)
+    args = parser.parse_args()
+
+    # Sanity checks for ccds to be integers
+    return args
+
+if __name__ == "__main__":
+
+
+    args = cmdline()
+    kw = vars(args)
+    pipe = steps_ap.APmock(**kw)
+
+    # Step 0
+    # Star the clock
+    pipe.begin_visit()
+
+    # Step 1
+    # Find and Copy/Move calibration to local file
+    pipe.copy_calibs() 
+    # Wait for slew and exposure to be finished
+    pipe.next('slew')
+    pipe.next('exposure')
+    
+    # Step 2 -- Copy raw 1 and process it
+    pipe.get_visit(1)
+    pipe.run_isr(1)
+    pipe.write_isr(1)
+    pipe.next('exposure')
+
+    # Step 2 -- Copy raw 1 and process it
+    pipe.get_visit(2)
+    pipe.run_isr(2)
+    pipe.write_isr(2)

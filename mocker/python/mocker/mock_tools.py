@@ -2,20 +2,25 @@ import os
 import argparse
 import ConfigParser
 import time
+import fitsio
+from collections import OrderedDict
+import copy
 
 # This can be modified by the configuration file -- move to mock_tools
-RAW_OUTFILE  = "{archive_path}/raw/{nite}/raw_{expnum:09d}_c{ccdnum:03d}_{band}.fits"
-BPM_OUTFILE  = "{archive_path}/cals/bpm/bpm_c{ccdnum:03d}.fits"
-FLAT_OUTFILE = "{archive_path}/cals/flats/flats_c{ccdnum:03d}_{band}.fits"
-BIAS_OUTFILE = "{archive_path}/cals/bias/bias_c{ccdnum:03d}.fits"
-TEMPLATE_OUTFILE = "{archive_path}/cals/templates/tmpl_c{ccdnum:03d}_{band}.fits"
+RAW_FILENAME  = "{archive_path}/raw/{nite}/raw_{expnum:09d}_c{ccdnum:03d}_{band}.fits"
+BPM_FILENAME  = "{archive_path}/cals/bpm/bpm_c{ccdnum:03d}.fits"
+FLAT_FILENAME = "{archive_path}/cals/flats/flats_c{ccdnum:03d}_{band}.fits"
+BIAS_FILENAME = "{archive_path}/cals/bias/bias_c{ccdnum:03d}.fits"
+TEMPLATE_FILENAME = "{archive_path}/cals/templates/tmpl_c{ccdnum:03d}_{band}.fits"
+ISR_FILENAME  = "{archive_path}/isr_{expnum:09d}_c{ccdnum:03d}_{band}.fits"
 
-OUTFILE = {
-'raw'  : RAW_OUTFILE,
-'bpm'  : BPM_OUTFILE,
-'flat' : FLAT_OUTFILE,
-'bias' : BIAS_OUTFILE,
-'template' : TEMPLATE_OUTFILE,
+FILENAME = {
+'raw'  : RAW_FILENAME,
+'bpm'  : BPM_FILENAME,
+'flat' : FLAT_FILENAME,
+'bias' : BIAS_FILENAME,
+'template' : TEMPLATE_FILENAME,
+'isr' : ISR_FILENAME,
 }
 
 # Get the location where the code is installed
@@ -23,6 +28,34 @@ try:
     MOCKER_DIR = os.path.join(os.environ['MOCKER_DIR'])
 except:
     MOCKER_DIR = __file__.split("/python/")[0]
+
+
+def get_headers_hdus(filename):
+    
+    header = OrderedDict()
+    hdu = OrderedDict()   
+
+    # Case 1 -- for well-defined fitsfiles with EXTNAME
+    with fitsio.FITS(filename) as fits:
+        for k in xrange(len(fits)):
+            h = fits[k].read_header()
+
+            if not h.get('EXTNAME') and k==0:
+                header['PRIMARY'] = h
+                extname = 'PRIMARY'
+                header[extname] = h
+                hdu[extname] = k
+                continue
+
+            # Make sure that we can get the EXTNAME
+            if not h.get('EXTNAME'):
+                continue
+            extname = h['EXTNAME'].strip()
+            if extname == 'COMPRESSED_IMAGE':
+                continue
+            header[extname] = h
+            hdu[extname] = k
+    return header,hdu
 
 def elapsed_time(t1,verbose=False):
     """ Formating of the elapsed time """

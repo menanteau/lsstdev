@@ -1,0 +1,79 @@
+- Step 0: START
+
+- Step 1: GET LOCATION FOR NEXT VISIT
+Actions: 
+  Start and Receive information from Next Visit: CCDNUM, RA, DEC, rotation angle, FILTER, AIRMASS, OBS-DATE
+Inputs: Location for next visit:
+  CCDNUM, RA, DEC, rotation angle, FILTER, AIRMASS, OBS-DATE
+Outputs: 
+  Formatted dictionary/json object to find templates and calibration in next step
+Details to consider:
+ Communication method between worker node (here) and Orchestration Manager 
+ Potentially the search for the templates for NEXT VISIT could be done here.
+ The spatial METADATA for both exposures in each visit should be the same, except for DATE
+
+- Step 2: GET CALIBRATIONS, TEMPLATES AND CATLOGS (ASTROM and DIA
+Sources) FOR VISIT
+Actions: 
+  . Find appropriate Calibrations (i.e. Flats Bias and BPMs) from the Global
+  input cache, based on RA, DEC, CCDNUM, FILTER and possibly OBS-DATE.
+  . Pull the data, from the Global Input Cache into 
+Inputs: 
+   Same formatted dictionary with NEXT VISIT Meta-data produced on STEP 1.
+Outputs: 
+  List and names of calibrations files for NEXT VISIT
+
+
+Step 3 -- ACQUIRE AND PROCESS SNAP 1
+Actions: 
+ - Get CCDNUM for EXPOSURE 1 from the distributor into the worker node
+ - Run Single Frame Processing (CCDproc) 
+Inputs: 
+ - Same formatted dictionary with NEXT VISIT Meta-data produced on STEP 1.
+ - CCD Image from exposure 1
+ - All calibrarions
+ - All catalogs
+Outputs: Detrended and astrometrically corrected CCD image from snap 1
+
+Step 4 -- ACQUIRE AND PROCESS SNAP 2
+Actions: 
+ - Get CCDNUM for EXPOSURE 1 from the distributor into the worker node
+ - Run Single Frame Processing (CCDproc) 
+Inputs: 
+ - Same formatted dictionary with NEXT VISIT Meta-data produced on STEP 1.
+ - CCD Image from snap 2
+Outputs: Detrended and astrometrically corrected CCD image from snap 1
+ - All calibrarions
+ - All catalogs
+
+Step 5 -- Coaddition of SNAP1 + SNAP2
+Inputs: 
+  - Imdetrended SNAP1 and SNAP2
+Outputs:
+  - Coadded image of SNAP1+SNAP2
+
+Step 6 -- REMAPING of template to coadd visit
+Inputs: 
+  - Image template
+  - Header of coaddimage
+Output:
+  - Remapped template
+
+Step 7 -- Run difference image
+  Inputs:
+  - Coadd of SNAP1 + 2
+  - Remapped template
+ Output:
+  - Difference Image
+  - DIA Sources
+
+Step 8 -- Source Association
+ Inputs:
+  - External Sources
+  - DIA Sources (catalog)
+ Outputs:
+  - DIA Objects (catalog)
+
+Step 9 -- Alert Generation
+
+Step 10 -- Alter distribution (Kafka connection)

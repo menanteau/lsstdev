@@ -26,8 +26,10 @@ def cmdline():
                         help="List of CCDs to build")
     parser.add_argument("--nccds", action="store",default=189, type=int,
                         help="Number of CCDs to build")
-    parser.add_argument("--expnum", action="store",default=None, type=int,
-                        help="Exposure number to build for raws")
+    parser.add_argument("--expnum", action="store",default=1, type=int,
+                        help="First exposure number used to build for raw files")
+    parser.add_argument("--nexp", action="store",default=2, type=int,
+                        help="Number of exposures per visit")
 
     parser.set_defaults(**defaults)
     args = parser.parse_args()
@@ -51,6 +53,8 @@ if __name__ == "__main__":
     maker.make('bias','float32',extnames=['SCI','WGT'])
     for band in args.bands:
         maker.make('flat','float32',band=band,extnames=['SCI','WGT'])
-        maker.make('raw','int32',band=band,extnames=['SCI'])
         maker.make('template','float32',band=band, extnames=['SCI','WGT'])
+        for visit in range(args.nexp):
+            maker.make('raw','int32',band=band,extnames=['SCI'])
+
 

@@ -19,8 +19,8 @@ class IMAGEMAKER(object):
 
         self.keys = keys
 
-        # Load defaults OUTFILE patterns
-        self.OUTFILE = mock_tools.OUTFILE
+        # Load defaults FILENAME patterns
+        self.FILENAME = mock_tools.FILENAME
 
         # Load default location
         self.MOCKER_DIR = mock_tools.MOCKER_DIR
@@ -30,11 +30,11 @@ class IMAGEMAKER(object):
         for k, v in keys.iteritems():
             setattr(self, k, v)
 
-        # Update OUTFILE format
-        for key in self.OUTFILE.keys():
-            if keys.get('%s_OUTFILE' % key.upper()):
+        # Update FILENAME format
+        for key in self.FILENAME.keys():
+            if keys.get('%s_FILENAME' % key.upper()):
                 print "Updating %s definitions" % key
-                self.OUTFILE[key] = keys.get('%s_OUTFILE' % key.upper())
+                self.FILENAME[key] = keys.get('%s_FILENAME' % key.upper())
 
         # Get the generic headers for CCD/TEL
         self.header =  self.read_generic_headers(self.MOCKER_DIR)
@@ -49,7 +49,7 @@ class IMAGEMAKER(object):
             setattr(self, k, v)
 
         # Make sure the path location exists
-        outpath = os.path.dirname(self.OUTFILE[filetype]).format(**self.keys)
+        outpath = os.path.dirname(self.FILENAME[filetype]).format(**self.keys)
         mock_tools.create_output_path(outpath)
 
         print "Preparing the %s files" % filetype
@@ -59,7 +59,7 @@ class IMAGEMAKER(object):
             ccdnum = int(ccdnum)
             # The output name
             kw = {'band':self.band,'expnum':self.expnum,'ccdnum':ccdnum, 'archive_path':self.archive_path, 'nite':self.nite}
-            outfile = self.OUTFILE[filetype].format(**kw)
+            outfile = self.FILENAME[filetype].format(**kw)
             im_ccd = OrderedDict()
 
             # Loop over extnames
@@ -75,6 +75,9 @@ class IMAGEMAKER(object):
                 ofits.write(im_ccd[extname],extname=extname,header=self.header['CCD'])
 
             print "Wrote %s" % outfile
+
+        # If we make a raw, we need to revup by one the expnum
+        if filetype == 'raw': self.expnum = self.expnum + 1
         
     @staticmethod
     def read_generic_headers(mocker_dir):
