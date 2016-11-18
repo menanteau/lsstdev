@@ -37,8 +37,24 @@ def cmdline():
                         help="Exposure time per snap (include readout)")
     parser.add_argument("--slew", action="store",default=2, type=int, 
                         help="Slew time")
-    parser.add_argument("--isr", action="store",default=15, type=int, 
-                        help="ISR (detremd) time")
+    parser.add_argument("--isr", action="store",default=10, type=int, 
+                        help="ISR (detrend) time")
+    parser.add_argument("--coadd", action="store",default=5, type=int, 
+                        help="Coadd time for ISR images")
+    parser.add_argument("--remap", action="store",default=5, type=int, 
+                        help="Remap time for template images")
+    parser.add_argument("--diffima", action="store",default=5, type=int, 
+                        help="Difference Imaging time for template images")
+    parser.add_argument("--assoc", action="store",default=3, type=int, 
+                        help="Source Association time for template images")
+    parser.add_argument("--alert", action="store",default=2, type=int, 
+                        help="Alert Generation time for template images")
+    parser.add_argument("--diasrc", action="store",default=1000, type=int, 
+                        help="Number of DIA Sources to add catalog")
+    parser.add_argument("--diaobj", action="store",default=10000, type=int, 
+                        help="Number of DIA Ojects to add catalog")
+    parser.add_argument("--diaalr", action="store",default=100, type=int, 
+                        help="Number of DIA Alerts to add catalog")
     parser.add_argument("--readout", action="store",default=0, type=int, 
                         help="Readout Time")
     parser.add_argument("--dryrun", action="store_true",default=False, 
@@ -51,7 +67,6 @@ def cmdline():
     return args
 
 if __name__ == "__main__":
-
 
     args = cmdline()
     kw = vars(args)
@@ -70,11 +85,33 @@ if __name__ == "__main__":
     
     # Step 2 -- Copy raw 1 and process it
     pipe.get_visit(1)
-    pipe.run_isr(1)
+    pipe.run_step('isr')
     pipe.write_isr(1)
     pipe.next('exposure')
 
-    # Step 2 -- Copy raw 1 and process it
+    # Step 3 -- Copy raw 2 and process it
     pipe.get_visit(2)
-    pipe.run_isr(2)
+    pipe.run_step('isr')
     pipe.write_isr(2)
+
+    # Step 4 -- Coadd process visit 1 + visit 2
+    pipe.run_step('coadd')
+    pipe.write_coadd(2)
+
+    # Step 5 -- Remap template to coadd image
+    pipe.run_step('remap')
+    pipe.write_remap()
+    
+    # Step 6 -- Run diff image
+    pipe.run_step('diffima')
+    pipe.write_diffima()
+    pipe.write_catalog('diasrc')
+
+    # Step 7 -- Run association
+    pipe.run_step('assoc')
+    pipe.write_catalog('diaobj')
+    
+    # Step 8 Alert Generation
+    pipe.run_step('alert')
+    pipe.write_catalog('diaalr')
+

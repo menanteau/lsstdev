@@ -28,7 +28,6 @@ class APmock(object):
         #self.INPUT_PATH = mock_tools.INPUT_PATH
         #self.PRODUCT_PATH = mock_tools.PRODUCT_PATH
 
-
         # Unpack the dictionary of **keys into variables
         # self.keyname = key['keyname']
         for k, v in keys.iteritems():
@@ -99,16 +98,41 @@ class APmock(object):
         return outfile
 
 
-    def run_isr(self,snap):
+    def run_step(self,stepname):
 
-        sleeptime = self.isr
+        sleeptime = getattr(self, stepname)
         if sleeptime > 0:
             while sleeptime > 0:
-                stdout.write("\rSleeping while waiting for ISR to complete : %d s. (remaining)" % sleeptime)
+                stdout.write("\rSleeping while waiting for %s to complete : %d s. (remaining)" % (stepname,sleeptime))
                 stdout.flush()
                 time.sleep(1)
                 sleeptime = sleeptime - 1
             stdout.write("\n") # move the cursor to the next line
+
+
+    def write_coadd(self,nima=2,btype='float32'):
+
+        # Read in and add
+        coadd_data = {
+            'SCI' : 0,
+            'WGT' : 0,
+            }
+        for k in range(nima):
+            expnum = self.expnum + k
+            src = self.find_file(filetype='isr',location=self.product_path,expnum=expnum)
+            ifits = fitsio.FITS(src,'r')
+            for EXTNAME in ['SCI','WGT']:
+                header = ifits[EXTNAME].read_header()
+                data   = ifits[EXTNAME].read()
+                coadd_data[EXTNAME] = coadd_data[EXTNAME] + data
+            
+        # Define out names
+        dest = self.find_file(filetype='coadd',location=self.product_path)
+        ofits = fitsio.FITS(dest,'rw',clobber=True)
+        for EXTNAME in ['SCI','WGT']:
+            ofits.write(coadd_data[EXTNAME],extname=EXTNAME,header=header)
+        print "Wrote %s" % dest
+
 
     def write_isr(self,snap,btype='float32'):
 
@@ -130,6 +154,70 @@ class APmock(object):
         for EXTNAME in ['SCI','WGT']:
             ofits.write(im[EXTNAME],extname=EXTNAME,header=header)
         print "Wrote %s" % dest
+
+    def write_remap(self,btype='float32'):
+
+        # Now we write the remapped template
+        src  = self.find_file(filetype='template',location=self.product_path)
+        dest = self.find_file(filetype='remap',location=self.product_path)
+
+        ifits = fitsio.FITS(src,'r')
+        ofits = fitsio.FITS(dest,'rw',clobber=True)
+        # Read in the input
+        header = ifits[0].read_header()
+        naxis1 = header['NAXIS1']
+        naxis2 = header['NAXIS2']
+
+        # We only read the section we need to use
+        data   = ifits[0][0:naxis1-1,0:naxis2-1]
+        weight = ifits[1][0:naxis1-1,0:naxis2-1]
+
+        image_sci = copy.deepcopy(data)
+        image_wgt = copy.deepcopy(weight)        
+        im = {
+            'SCI' : image_sci.astype(btype),
+            'WGT' : image_wgt.astype(btype),
+            }
+        for EXTNAME in ['SCI','WGT']:
+            ofits.write(im[EXTNAME],extname=EXTNAME,header=header)
+        print "Wrote %s" % dest
+
+    def write_diffima(self,btype='float32'):
+
+        # Now we write the remapped template
+        src  = self.find_file(filetype='coadd',location=self.product_path)
+        dest = self.find_file(filetype='diffima',location=self.product_path)
+
+        ifits = fitsio.FITS(src,'r')
+        ofits = fitsio.FITS(dest,'rw',clobber=True)
+        # Read in the input
+        header = ifits[0].read_header()
+        naxis1 = header['NAXIS1']
+        naxis2 = header['NAXIS2']
+
+        # We only read the section we need to use
+        data   = ifits[0].read()
+        weight = ifits[1].read()
+
+        image_sci = copy.deepcopy(data)
+        image_wgt = copy.deepcopy(weight)        
+        im = {
+            'SCI' : image_sci.astype(btype),
+            'WGT' : image_wgt.astype(btype),
+            }
+        for EXTNAME in ['SCI','WGT']:
+            ofits.write(im[EXTNAME],extname=EXTNAME,header=header)
+        print "Wrote %s" % dest
+
+
+    def write_catalog(self,ftype,ncols=10,nrows=None,btype='f8'):
+        dest = self.find_file(filetype=ftype,location=self.product_path)
+
+        # if not passed
+        if not nrows:
+            nrows = getattr(self, ftype)
+        mock_tools.writeCatalog(dest,nrows,ncols,dtype='f8')
+        print "Wrote %s objects to %s" % (nrows,dest)
 
     def next(self,step):
 

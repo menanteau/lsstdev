@@ -3,16 +3,28 @@ import argparse
 import ConfigParser
 import time
 import fitsio
+import numpy
+
 from collections import OrderedDict
 import copy
 
 # This can be modified by the configuration file -- move to mock_tools
+
+# Inputs
 RAW_FILENAME  = "{archive_path}/raw/{nite}/raw_{expnum:09d}_c{ccdnum:03d}_{band}.fits"
 BPM_FILENAME  = "{archive_path}/cals/bpm/bpm_c{ccdnum:03d}.fits"
 FLAT_FILENAME = "{archive_path}/cals/flats/flats_c{ccdnum:03d}_{band}.fits"
 BIAS_FILENAME = "{archive_path}/cals/bias/bias_c{ccdnum:03d}.fits"
 TEMPLATE_FILENAME = "{archive_path}/cals/templates/tmpl_c{ccdnum:03d}_{band}.fits"
+
+# Outputs
 ISR_FILENAME  = "{archive_path}/isr_{expnum:09d}_c{ccdnum:03d}_{band}.fits"
+COADD_FILENAME = "{archive_path}/coadd_c{ccdnum:03d}_{band}.fits"
+REMAP_FILENAME = "{archive_path}/remap_c{ccdnum:03d}_{band}.fits"
+DIFFIMA_FILENAME = "{archive_path}/diffima_c{ccdnum:03d}_{band}.fits"
+DIAOBJ_FILENAME = "{archive_path}/diffima_c{ccdnum:03d}_{band}_objcat.fits"
+DIASRC_FILENAME = "{archive_path}/diffima_c{ccdnum:03d}_{band}_srccat.fits"
+DIAALR_FILENAME = "{archive_path}/diffima_c{ccdnum:03d}_{band}_alrcat.fits"
 
 FILENAME = {
 'raw'  : RAW_FILENAME,
@@ -21,6 +33,12 @@ FILENAME = {
 'bias' : BIAS_FILENAME,
 'template' : TEMPLATE_FILENAME,
 'isr' : ISR_FILENAME,
+'coadd' : COADD_FILENAME,
+'remap' : REMAP_FILENAME,
+'diffima' : DIFFIMA_FILENAME,
+'diasrc' : DIASRC_FILENAME,
+'diaobj' : DIAOBJ_FILENAME,
+'diaalr' : DIAALR_FILENAME,
 }
 
 # Get the location where the code is installed
@@ -119,3 +137,16 @@ def build_conf_parser(verb=False):
                         config.set(section,option,v.split(','))
             defaults.update(dict(config.items(section)))
     return conf_parser,defaults
+
+
+def writeCatalog(outname,nrows,ncols,dtype='f8'):
+
+        # Names of the columns and dtypes
+        dtypes = [("VAR%s" % (k+1), dtype) for k in range(ncols)]
+        data = numpy.zeros(nrows,dtypes)
+
+        for var,vartype in dtypes:
+            data[var] = numpy.random.random((nrows))
+
+        header=fitsio.FITSHDR()
+        fitsio.write(outname, data, extname='OBJECTS',clobber=True,header=header)
